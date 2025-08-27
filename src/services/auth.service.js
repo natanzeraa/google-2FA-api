@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt'
-import jwt from 'jsonwebtoken'
 import { default as Organization } from '../models/organization.js'
+import { generateTokens } from '../utils/handlers/token.handler.js'
 import * as authMsg from '../utils/messages/auth.messages.js'
 import { loginSchema } from '../utils/validations/login.schema.js'
 import { signupSchema } from '../utils/validations/signup.schema.js'
@@ -25,13 +25,9 @@ const login = async (data) => {
     const passwordsMatch = bcrypt.compare(password, organization.password)
     if (!passwordsMatch) throw new Error(errorMessages.INVALID_CREDENTIALS)
 
-    const token = jwt.sign(
-      { userId: organization.id },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: '1h'
-      }
-    )
+    const { accessToken, refreshToken } = generateTokens({
+      id: organization._id
+    })
 
     return {
       success: true,
@@ -44,7 +40,8 @@ const login = async (data) => {
         cnpj: organization.cnpj,
         phone: organization.phone
       },
-      token,
+      accessToken,
+      refreshToken,
       message: authMsg.successMessages.SUCCESS_LOGING_IN
     }
   } catch (error) {
@@ -85,8 +82,8 @@ const signup = async (data) => {
     })
     await organization.save()
 
-    const token = jwt.sign({ id: organization.id }, process.env.JWT_SECRET, {
-      expiresIn: '1h'
+    const { accessToken, refreshToken } = generateTokens({
+      id: organization._id
     })
 
     return {
@@ -100,7 +97,8 @@ const signup = async (data) => {
         cnpj: organization.cnpj,
         phone: organization.phone
       },
-      token,
+      accessToken,
+      refreshToken,
       message: authMsg.successMessages.SUCCESS_CREATING_ACCOUNT
     }
   } catch (error) {
