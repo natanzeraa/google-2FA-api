@@ -6,11 +6,8 @@ const findAll = (req, res) => handleResponse(res, customerService.findAll())
 const findById = (req, res) =>
   handleResponse(res, customerService.findById(req.params.id))
 
-const create = (req, res) => {
-  console.log(req.body)
-
+const create = (req, res) =>
   handleResponse(res, customerService.create({ body: req.body }))
-}
 
 const update = (req, res) =>
   handleResponse(
