@@ -39,7 +39,7 @@ const findById = async (id) => {
 
 const create = async (data) => {
   try {
-    const { email, cpfCnpj, phone, organization_id } = data
+    const { email, cpfCnpj, phone, organization_id } = data.body
 
     const customerExists = await Customer.findOne({
       $or: [
@@ -63,7 +63,7 @@ const create = async (data) => {
       return { success: false, status: 400, message: customerMsg.errorMessages.MANDATORY_FIELDS }
 
     const customer = await Customer.create({
-      ...data, organization: new mongoose.Types.ObjectId(data.organization_id)
+      ...data.body, organization: new mongoose.Types.ObjectId(organization_id)
     })
 
     return {
@@ -73,7 +73,6 @@ const create = async (data) => {
       message: customerMsg.successMessages.SUCCESS_CREATING_CUSTOMER
     }
   } catch (error) {
-    console.log(error)
     throw new Error('Não foi possível criar cliente: ', error.message)
   }
 }
