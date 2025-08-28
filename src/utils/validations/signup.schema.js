@@ -1,30 +1,36 @@
 import { z } from 'zod'
-import { errorMessages } from '../../utils/messages/auth.messages.js'
-import { isValidCNPJ, isValidEmail } from '../../utils/validations/auth.validator.js'
+import * as authMsg from '../../utils/messages/auth.messages.js'
+import {
+  isValidCNPJ,
+  isValidEmail
+} from '../../utils/validations/auth.validator.js'
 
 export const signupSchema = z.object({
   companyName: z
     .string()
-    .min(3, errorMessages.COMPANY_NAME_INVALID)
-    .nonempty(errorMessages.COMPANY_NAME_REQUIRED),
+    .min(3, authMsg.errorMessages.COMPANY_NAME_INVALID)
+    .nonempty(authMsg.errorMessages.COMPANY_NAME_REQUIRED),
 
   email: z
     .string()
-    .nonempty(errorMessages.EMAIL_REQUIRED)
-    .refine(isValidEmail, { message: errorMessages.EMAIL_INVALID }),
+    .nonempty(authMsg.errorMessages.EMAIL_REQUIRED)
+    .refine(isValidEmail, { message: authMsg.errorMessages.EMAIL_INVALID }),
 
   cnpj: z
     .string()
-    .nonempty(errorMessages.CNPJ_REQUIRED)
-    .refine(isValidCNPJ, { message: errorMessages.CNPJ_INVALID }),
+    .nonempty(authMsg.errorMessages.CNPJ_REQUIRED)
+    .refine(isValidCNPJ, { message: authMsg.errorMessages.CNPJ_INVALID }),
 
   phone: z
     .string()
-    .nonempty(errorMessages.PHONE_REQUIRED)
-    .regex(/^\+?[\d\s\-()]{7,15}$/, errorMessages.PHONE_INVALID),
+    .nonempty(authMsg.errorMessages.PHONE_REQUIRED)
+    .regex(/^\+?[\d\s\-()]{7,15}$/, authMsg.errorMessages.PHONE_INVALID),
 
   password: z
     .string()
-    .nonempty(errorMessages.PASSWORD_REQUIRED)
-    .min(6, errorMessages.PASSWORD_TOO_SHORT)
+    .nonempty(authMsg.errorMessages.PASSWORD_REQUIRED)
+    .min(6, authMsg.errorMessages.PASSWORD_TOO_SHORT),
+
+  twoFaEnabled: z
+    .boolean()
 })
