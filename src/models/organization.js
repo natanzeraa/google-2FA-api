@@ -39,6 +39,15 @@ const orgSchema = new mongoose.Schema({
     required: true,
     minLength: 6
   },
+  two_fa_enabled: {
+    type: Boolean,
+    required: true
+  },
+  totp_secret: {
+    type: String,
+    required: false,
+    length: 20
+  },
   users: [
     {
       type: mongoose.Schema.Types.ObjectId,
