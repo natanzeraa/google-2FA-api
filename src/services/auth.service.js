@@ -1,31 +1,46 @@
 import bcrypt from 'bcrypt'
 import { default as Organization } from '../models/organization.js'
+import { AuthException } from '../utils/exceptions/auth.exceptions.js'
+import { requiredFieldsHandler } from '../utils/handlers/requiredFileds.handler.js'
 import { generateTokens } from '../utils/handlers/token.handler.js'
 import * as authMsg from '../utils/messages/auth.messages.js'
 import * as organizationMsg from '../utils/messages/organization.messages.js'
 import { loginSchema } from '../utils/validations/login.schema.js'
 import { signupSchema } from '../utils/validations/signup.schema.js'
+import { otpAuthService } from './otpauth.service.js'
 
 export const authService = {
   login: async (data) => {
     try {
-      const parsed = loginSchema.safeParse(data)
-
-      if (!parsed.success) {
-        const errors = parsed.error.errors.map((err) => ({
-          field: err.path[0],
-          message: err.message
-        }))
-        return res.status(400).json({ errors })
-      }
+      const parsed = requiredFieldsHandler({ schema: loginSchema, data: data })
 
       const { email, password } = parsed.data
 
       const organization = await Organization.findOne({ email })
-      if (!organization) throw new Error(organizationMsg.errorMessages.ORGANIZATION_NOT_FOUND)
+      if (!organization) {
+        throw new AuthException(organizationMsg.errorMessages.ORGANIZATION_NOT_FOUND)
+      }
 
       const passwordsMatch = bcrypt.compare(password, organization.password)
-      if (!passwordsMatch) throw new Error(authMsg.errorMessages.INVALID_CREDENTIALS)
+      if (!passwordsMatch) {
+        throw new AuthException(authMsg.errorMessages.INVALID_CREDENTIALS)
+      }
+
+      if (organization.two_fa_enabled) {
+        const result = await otpAuthService.checkTOTPAuth({
+          token: data.token,
+          companyName: organization.company_name,
+          email: organization.email
+        })
+
+        if (!result.success) {
+          return {
+            success: false,
+            status: 400,
+            message: authMsg.errorMessages.TOTP_INVALID
+          }
+        }
+      }
 
       const { accessToken, refreshToken } = generateTokens({
         id: organization._id
@@ -40,39 +55,36 @@ export const authService = {
           companyName: organization.company_name,
           email: organization.email,
           cnpj: organization.cnpj,
-          phone: organization.phone
+          phone: organization.phone,
+          twoFaEnabled: organization.two_fa_enabled
         },
         accessToken,
         refreshToken,
         message: authMsg.successMessages.SUCCESS_LOGING_IN
       }
     } catch (error) {
-      throw new Error(error)
+      throw new AuthException(error.message)
     }
   },
 
   signup: async (data) => {
     try {
-      const parsed = signupSchema.safeParse(data)
+      const parsed = requiredFieldsHandler({ schema: signupSchema, data: data })
 
-      if (!parsed.success) {
-        const errors = parsed.error.errors.map((err) => ({
-          field: err.path[0],
-          message: err.message
-        }))
-        return res.status(400).json({ errors })
-      }
-
-      const { companyName, email, cnpj, phone, password, twoFaEnabled } = parsed.data
+      const { companyName, email, cnpj, phone, password, twoFaEnabled } =
+        parsed.data
 
       const cnpjExists = await Organization.findOne({ cnpj })
-      if (cnpjExists) throw new Error(organizationMsg.errorMessages.CNPJ_IN_USE_ALREADY)
+      if (cnpjExists)
+        throw new AuthException(organizationMsg.errorMessages.CNPJ_IN_USE_ALREADY)
 
       const emailExists = await Organization.findOne({ email })
-      if (emailExists) throw new Error(authMsg.errorMessages.EMAIL_IN_USE_ALREADY)
+      if (emailExists)
+        throw new AuthException(authMsg.errorMessages.EMAIL_IN_USE_ALREADY)
 
       const phoneExists = await Organization.findOne({ phone })
-      if (phoneExists) throw new Error(authMsg.errorMessages.PHONE_IN_USE_ALREADY)
+      if (phoneExists)
+        throw new AuthException(authMsg.errorMessages.PHONE_IN_USE_ALREADY)
 
       const organization = new Organization({
         company_name: companyName,
@@ -104,7 +116,7 @@ export const authService = {
         message: authMsg.successMessages.SUCCESS_CREATING_ACCOUNT
       }
     } catch (error) {
-      throw new Error(error)
+      throw new AuthException(error.message)
     }
   }
 }

@@ -1,24 +1,46 @@
 import * as OTPAuth from 'otpauth'
 import * as QRCode from 'qrcode'
 import Organization from '../models/organization.js'
+import {
+  AuthException,
+  OrganizationNotFoundException,
+  TOTPAuthInvalidException,
+  TOTPSecretNotFoundException
+} from '../utils/exceptions/auth.exceptions.js'
+import { requiredFieldsHandler } from '../utils/handlers/requiredFileds.handler.js'
 import { generateBase32Secret } from '../utils/handlers/tokenGeneration.handler.js'
 import * as authMsg from '../utils/messages/auth.messages.js'
 import * as organizationMsg from '../utils/messages/organization.messages.js'
+import {
+  checkTOTPAuthSchema,
+  enableTOTPAuthSchema
+} from '../utils/validations/totpauth.validator.js'
 
 const otpAuthService = {
-  checkTOTPAuth: async ({ token, companyName, email }) => {
+  checkTOTPAuth: async (data) => {
     try {
+      const parsed = requiredFieldsHandler({
+        schema: checkTOTPAuthSchema,
+        data: data
+      })
+
+      const { token, companyName, email } = parsed.data
+
       const organization = await Organization.findOne({
         company_name: companyName,
         email: email
       })
 
-      if (!organization || !organization.totp_secret) {
-        return {
-          success: false,
-          status: 400,
-          message: authMsg.errorMessages.TOTP_NOT_FOUND
-        }
+      if (!organization) {
+        throw new OrganizationNotFoundException(
+          authMsg.errorMessages.ORGANIZATION_NOT_FOUND
+        )
+      }
+
+      if (!organization.totp_secret) {
+        throw new TOTPSecretNotFoundException(
+          authMsg.errorMessages.TOTP_NOT_FOUND
+        )
       }
 
       let totp = new OTPAuth.TOTP({
@@ -33,11 +55,7 @@ const otpAuthService = {
       let isValid = totp.validate({ token })
 
       if (isValid === null) {
-        return {
-          success: false,
-          status: 400,
-          message: authMsg.errorMessages.TOTP_INVALID
-        }
+        throw new TOTPAuthInvalidException(authMsg.errorMessages.TOTP_INVALID)
       }
 
       return {
@@ -47,11 +65,19 @@ const otpAuthService = {
         message: authMsg.successMessages.SUCCESS_TOTP_VERIFIED
       }
     } catch (error) {
-      throw new Error(`Erro ao verificar 2FA: ${error}`)
+      throw new AuthException(error.message)
     }
   },
-  enableTOTPAuth: async ({ companyName, email }) => {
+
+  enableTOTPAuth: async (data) => {
     try {
+      const parsed = requiredFieldsHandler({
+        schema: enableTOTPAuthSchema,
+        data: data
+      })
+
+      const { companyName, email } = parsed.data
+
       const organization = await Organization.findOne({
         company_name: companyName,
         email
@@ -78,7 +104,7 @@ const otpAuthService = {
         }
       }
 
-      const data = await otpAuthService.generateTOTPAuth({
+      const totpAuth = await otpAuthService.generateTOTPAuth({
         companyName,
         email
       })
@@ -86,13 +112,14 @@ const otpAuthService = {
       return {
         success: true,
         status: 200,
-        data,
+        data: totpAuth,
         message: authMsg.successMessages.SUCCESS_TOTP_ENABLED
       }
     } catch (error) {
-      throw new Error(`Erro ao gerar 2FA: ${error.message}`)
+      throw new AuthException(error.message)
     }
   },
+
   generateTOTPAuth: async ({ companyName, email }) => {
     try {
       const base32Secret = generateBase32Secret()
@@ -147,7 +174,7 @@ const otpAuthService = {
         message: authMsg.successMessages.SUCCESS_TOTP_ENABLED
       }
     } catch (error) {
-      throw new Error(`Erro ao gerar 2FA: ${error.message}`)
+      throw new AuthException(error.message)
     }
   }
 }
