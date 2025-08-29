@@ -51,17 +51,29 @@ const otpAuthService = {
   },
   enableTOTPAuth: async ({ companyName, email }) => {
     try {
-      const organization = await Organization.findOneAndUpdate(
-        { company_name: companyName, email },
-        { $set: { two_fa_enabled: true } },
-        { new: true, runValidators: true }
-      )
+      const organization = await Organization.findOne({
+        company_name: companyName,
+        email
+      })
 
       if (!organization) {
         return {
           success: false,
           status: 404,
           message: organizationMsg.errorMessages.ORGANIZATION_NOT_FOUND
+        }
+      }
+
+      const isTwoFaEnabled = await organization.updateOne(
+        { $set: { two_fa_enabled: true } },
+        { new: true, runValidators: true }
+      )
+
+      if(!isTwoFaEnabled){
+        return {
+          success: false,
+          status: 404,
+          message: authMsg.errorMessages.TOTP_COULD_NOT_BE_ENABLED
         }
       }
 
