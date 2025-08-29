@@ -19,6 +19,8 @@ export const errorMessages = {
   // Validações específicas
   COMPANY_NAME_REQUIRED: 'O nome da empresa é obrigatório',
   COMPANY_NAME_INVALID: 'O nome da empresa é inválido',
+  ORGANIZATION_OR_TOKEN_MISSING: "Empresa ou token é inválido",
+  ORGANIZATION_NOT_FOUND: 'Organização não encontrada',
 
   EMAIL_REQUIRED: 'O e-mail é obrigatório',
   EMAIL_INVALID: 'O e-mail informado é inválido',
