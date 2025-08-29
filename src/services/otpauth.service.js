@@ -1,6 +1,7 @@
 import * as OTPAuth from 'otpauth'
 import * as QRCode from 'qrcode'
 import Organization from '../models/organization.js'
+import { generateBase32Secret } from '../utils/handlers/tokenGeneration.handler.js'
 import * as authMsg from '../utils/messages/auth.messages.js'
 import * as organizationMsg from '../utils/messages/organization.messages.js'
 
@@ -26,12 +27,12 @@ const otpAuthService = {
         algorithm: 'SHA1',
         digits: 6,
         period: 30,
-        secret: OTPAuth.Secret.fromBase32(organization.totp_secret)
+        secret: organization.totp_secret
       })
 
       let isValid = totp.validate({ token })
 
-      if (!isValid) {
+      if (isValid === null) {
         return {
           success: false,
           status: 400,
@@ -69,7 +70,7 @@ const otpAuthService = {
         { new: true, runValidators: true }
       )
 
-      if(!isTwoFaEnabled){
+      if (!isTwoFaEnabled) {
         return {
           success: false,
           status: 404,
@@ -94,10 +95,12 @@ const otpAuthService = {
   },
   generateTOTPAuth: async ({ companyName, email }) => {
     try {
-      const organization = Organization.findOne({
-        company_name: companyName,
-        email: email
-      })
+      const base32Secret = generateBase32Secret()
+
+      const organization = await Organization.findOneAndUpdate(
+        { company_name: companyName, email: email },
+        { totp_secret: base32Secret }
+      )
 
       if (!organization) {
         return {
@@ -113,16 +116,15 @@ const otpAuthService = {
         algorithm: 'SHA1',
         digits: 6,
         period: 30,
-        secret: new OTPAuth.Secret()
+        secret: base32Secret
       })
 
-      let secret = new OTPAuth.Secret({ size: 20 })
       let token = totp.generate()
       let delta = totp.validate({ token, window: 1 })
       let counter = totp.counter()
       let remaining = totp.remaining()
       let uri = totp.toString()
-      let qrCodeURL = await QRCode.toDataURL(uri)
+      let qrCode = await QRCode.toDataURL(uri)
 
       totp = OTPAuth.URI.parse(uri)
 
@@ -134,14 +136,10 @@ const otpAuthService = {
         }
       }
 
-      await organization.updateOne({
-        totp_secret: secret.base32
-      })
-
       return {
         success: true,
         status: 200,
-        qrCodeURL,
+        qrCode,
         uri,
         delta,
         counter,
