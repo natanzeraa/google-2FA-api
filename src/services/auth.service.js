@@ -18,12 +18,15 @@ export const authService = {
 
       const organization = await Organization.findOne({ email })
       if (!organization) {
-        throw new AuthException(organizationMsg.errorMessages.ORGANIZATION_NOT_FOUND)
+        throw new AuthException(
+          organizationMsg.errorMessages.ORGANIZATION_NOT_FOUND,
+          404
+        )
       }
 
       const passwordsMatch = bcrypt.compare(password, organization.password)
       if (!passwordsMatch) {
-        throw new AuthException(authMsg.errorMessages.INVALID_CREDENTIALS)
+        throw new AuthException(authMsg.errorMessages.INVALID_CREDENTIALS, 400)
       }
 
       if (organization.two_fa_enabled) {
@@ -34,11 +37,7 @@ export const authService = {
         })
 
         if (!result.success) {
-          return {
-            success: false,
-            status: 400,
-            message: authMsg.errorMessages.TOTP_INVALID
-          }
+          throw new AuthException(authMsg.errorMessages.TOTP_INVALID, 400)
         }
       }
 
@@ -63,7 +62,7 @@ export const authService = {
         message: authMsg.successMessages.SUCCESS_LOGING_IN
       }
     } catch (error) {
-      throw new AuthException(error.message)
+      throw new AuthException(error.message, error.status || 500)
     }
   },
 
@@ -76,7 +75,10 @@ export const authService = {
 
       const cnpjExists = await Organization.findOne({ cnpj })
       if (cnpjExists)
-        throw new AuthException(organizationMsg.errorMessages.CNPJ_IN_USE_ALREADY)
+        throw new AuthException(
+          organizationMsg.errorMessages.CNPJ_IN_USE_ALREADY,
+          409
+        )
 
       const emailExists = await Organization.findOne({ email })
       if (emailExists)
@@ -116,7 +118,7 @@ export const authService = {
         message: authMsg.successMessages.SUCCESS_CREATING_ACCOUNT
       }
     } catch (error) {
-      throw new AuthException(error.message)
+      throw new AuthException(error.message, error.status || 500)
     }
   }
 }
