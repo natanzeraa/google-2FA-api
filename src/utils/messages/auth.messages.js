@@ -19,7 +19,7 @@ export const errorMessages = {
   // Validações específicas
   COMPANY_NAME_REQUIRED: 'O nome da empresa é obrigatório',
   COMPANY_NAME_INVALID: 'O nome da empresa é inválido',
-  ORGANIZATION_OR_TOKEN_MISSING: "Empresa ou token é inválido",
+  ORGANIZATION_OR_TOKEN_MISSING: 'Empresa ou token é inválido',
   ORGANIZATION_NOT_FOUND: 'Organização não encontrada',
 
   EMAIL_REQUIRED: 'O e-mail é obrigatório',
@@ -49,9 +49,11 @@ export const errorMessages = {
   TOTP_INVALID: 'O código de autenticação é inválido',
   TOTP_EXPIRED: 'O código de autenticação expirou',
   TOTP_ALREADY_ENABLED: 'A autenticação de dois fatores já está ativada',
+  TOTP_ALREADY_DISABLED: 'A autenticação de dois fatores já está inativa',
   TOTP_NOT_ENABLED: 'A autenticação de dois fatores não está habilitada',
-  TOTP_COULD_NOT_BE_ENABLED: 'A autenticação de dois fatores não foi habilitada para essa organização',
+  TOTP_COULD_NOT_BE_ENABLED:
+    'A autenticação de dois fatores não foi habilitada para essa organização',
   TOTP_NOT_GENERATED: 'O código de autenticação não foi gerado',
-  TOTP_NOT_FOUND: "Secret não encontrado para essa organização",
-  TWO_FA_ENABLE_REQUIRED: "2FA é um valor obrigatório (true/false)"
+  TOTP_NOT_FOUND: 'Secret não encontrado para essa organização',
+  TWO_FA_ENABLE_REQUIRED: '2FA é um valor obrigatório (true/false)'
 }
