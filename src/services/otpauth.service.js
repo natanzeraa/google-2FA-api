@@ -4,6 +4,8 @@ import Organization from '../models/organization.js'
 import {
   AuthException,
   OrganizationNotFoundException,
+  TOTPAuthAlreadyDisabledException,
+  TOTPAuthAlreadyEnabledException,
   TOTPAuthInvalidException,
   TOTPSecretNotFoundException
 } from '../utils/exceptions/auth.exceptions.js'
@@ -33,13 +35,15 @@ const otpAuthService = {
 
       if (!organization) {
         throw new OrganizationNotFoundException(
-          authMsg.errorMessages.ORGANIZATION_NOT_FOUND
+          authMsg.errorMessages.ORGANIZATION_NOT_FOUND,
+          404
         )
       }
 
       if (!organization.totp_secret) {
         throw new TOTPSecretNotFoundException(
-          authMsg.errorMessages.TOTP_NOT_FOUND
+          authMsg.errorMessages.TOTP_NOT_FOUND,
+          404
         )
       }
 
@@ -55,7 +59,10 @@ const otpAuthService = {
       let isValid = totp.validate({ token })
 
       if (isValid === null) {
-        throw new TOTPAuthInvalidException(authMsg.errorMessages.TOTP_INVALID)
+        throw new TOTPAuthInvalidException(
+          authMsg.errorMessages.TOTP_INVALID,
+          400
+        )
       }
 
       return {
@@ -65,7 +72,7 @@ const otpAuthService = {
         message: authMsg.successMessages.SUCCESS_TOTP_VERIFIED
       }
     } catch (error) {
-      throw new AuthException(error.message)
+      throw new AuthException(error.message, error.status || 500)
     }
   },
 
@@ -80,29 +87,27 @@ const otpAuthService = {
 
       const organization = await Organization.findOne({
         company_name: companyName,
-        email
+        email: email
       })
 
       if (!organization) {
-        return {
-          success: false,
-          status: 404,
-          message: organizationMsg.errorMessages.ORGANIZATION_NOT_FOUND
-        }
+        throw new OrganizationNotFoundException(
+          authMsg.errorMessages.ORGANIZATION_NOT_FOUND,
+          404
+        )
       }
 
-      const isTwoFaEnabled = await organization.updateOne(
+      if (organization.two_fa_enabled) {
+        throw new TOTPAuthAlreadyEnabledException(
+          authMsg.errorMessages.TOTP_ALREADY_ENABLED,
+          400
+        )
+      }
+
+      await organization.updateOne(
         { $set: { two_fa_enabled: true } },
         { new: true, runValidators: true }
       )
-
-      if (!isTwoFaEnabled) {
-        return {
-          success: false,
-          status: 404,
-          message: authMsg.errorMessages.TOTP_COULD_NOT_BE_ENABLED
-        }
-      }
 
       const totpAuth = await otpAuthService.generateTOTPAuth({
         companyName,
@@ -116,7 +121,69 @@ const otpAuthService = {
         message: authMsg.successMessages.SUCCESS_TOTP_ENABLED
       }
     } catch (error) {
-      throw new AuthException(error.message)
+      throw new AuthException(error.message, error.status || 500)
+    }
+  },
+
+  disableTOTPAuth: async (data) => {
+    try {
+      const parsed = requiredFieldsHandler({
+        schema: checkTOTPAuthSchema,
+        data: data
+      })
+
+      const { companyName, email, token } = parsed.data
+
+      const organization = await Organization.findOne({
+        company_name: companyName,
+        email: email
+      })
+
+      if (!organization) {
+        throw new OrganizationNotFoundException(
+          authMsg.errorMessages.ORGANIZATION_NOT_FOUND,
+          404
+        )
+      }
+
+      if (!organization.two_fa_enabled) {
+        throw new TOTPAuthAlreadyDisabledException(
+          authMsg.errorMessages.TOTP_ALREADY_DISABLED,
+          400
+        )
+      }
+
+      let totp = new OTPAuth.TOTP({
+        issuer: companyName,
+        label: email,
+        algorithm: 'SHA1',
+        digits: 6,
+        period: 30,
+        secret: organization.totp_secret
+      })
+
+      let isValid = totp.validate({ token })
+
+      if (isValid === null) {
+        throw new TOTPAuthInvalidException(
+          authMsg.errorMessages.TOTP_INVALID,
+          400
+        )
+      }
+
+      const result = await organization.updateOne(
+        { $set: { two_fa_enabled: false, totp_secret: '' } },
+        { new: true, runValidators: true }
+      )
+
+      return {
+        success: true,
+        status: 200,
+        result,
+        message: authMsg.successMessages.SUCCESS_TOTP_DISABLED
+      }
+    } catch (error) {
+      throw new AuthException(error.message, error.status || 500)
     }
   },
 
@@ -174,10 +241,9 @@ const otpAuthService = {
         message: authMsg.successMessages.SUCCESS_TOTP_ENABLED
       }
     } catch (error) {
-      throw new AuthException(error.message)
+      throw new AuthException(error.message, error.status || 500)
     }
   }
 }
 
 export { otpAuthService }
-
