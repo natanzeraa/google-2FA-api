@@ -6,7 +6,6 @@ class AuthException extends Error {
   }
 }
 
-// Credenciais inválidas (senha/email)
 class InvalidCredentialsException extends AuthException {
   constructor(message = 'Email ou senha inválidos', status = 401) {
     super(message, status)
@@ -14,7 +13,6 @@ class InvalidCredentialsException extends AuthException {
   }
 }
 
-// Conta não encontrada
 class AccountNotFoundException extends AuthException {
   constructor(message = 'Conta não encontrada', status = 404) {
     super(message, status)
@@ -22,7 +20,6 @@ class AccountNotFoundException extends AuthException {
   }
 }
 
-// Token TOTP ausente ou inválido
 class TOTPAuthException extends AuthException {
   constructor(
     message = 'O código de autenticação é obrigatório',
@@ -33,7 +30,6 @@ class TOTPAuthException extends AuthException {
   }
 }
 
-// Token TOTP incorreto
 class TOTPAuthInvalidException extends AuthException {
   constructor(message = 'O código de autenticação é inválido', status = 401) {
     super(message, status)
@@ -41,7 +37,6 @@ class TOTPAuthInvalidException extends AuthException {
   }
 }
 
-// Token TOTP expirado
 class TOTPAuthExpiredException extends AuthException {
   constructor(message = 'O código de autenticação expirou', status = 401) {
     super(message, status)
@@ -49,7 +44,6 @@ class TOTPAuthExpiredException extends AuthException {
   }
 }
 
-// Secret não encontrado para a organização
 class TOTPSecretNotFoundException extends AuthException {
   constructor(
     message = 'Secret não encontrado para essa organização',
@@ -60,11 +54,38 @@ class TOTPSecretNotFoundException extends AuthException {
   }
 }
 
-class OrganizationNotFoundException extends AuthException {
+class TOTPAuthNotEnabledException extends AuthException {
   constructor(
-    message = 'Organização não existe',
+    message = 'Autenticação de dois fatores não está habilitada',
     status = 404
   ) {
+    super(message, status)
+    this.name = 'TOTPAuthNotEnabledException'
+  }
+}
+
+class TOTPAuthAlreadyEnabledException extends AuthException {
+  constructor(
+    message = 'Autenticação de dois fatores já está habilitada',
+    status = 400
+  ) {
+    super(message, status)
+    this.name = 'TOTPAuthAlreadyEnabledException'
+  }
+}
+
+class TOTPAuthAlreadyDisabledException extends AuthException {
+  constructor(
+    message = 'Autenticação de dois fatores já está habilitada',
+    status = 400
+  ) {
+    super(message, status)
+    this.name = 'TOTPAuthAlreadyDisabledException'
+  }
+}
+
+class OrganizationNotFoundException extends AuthException {
+  constructor(message = 'Organização não existe', status = 404) {
     super(message, status)
     this.name = 'OrganizationNotFoundException'
   }
@@ -73,9 +94,13 @@ class OrganizationNotFoundException extends AuthException {
 export {
   AccountNotFoundException,
   AuthException,
-  InvalidCredentialsException, OrganizationNotFoundException, TOTPAuthException,
+  InvalidCredentialsException,
+  OrganizationNotFoundException,
+  TOTPAuthAlreadyDisabledException,
+  TOTPAuthAlreadyEnabledException,
+  TOTPAuthException,
   TOTPAuthExpiredException,
   TOTPAuthInvalidException,
+  TOTPAuthNotEnabledException,
   TOTPSecretNotFoundException
 }
-
