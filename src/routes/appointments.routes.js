@@ -1,6 +1,6 @@
 import express from 'express'
 import { checkToken } from '../middlewares/token.middleware.js'
-import appointmentsMock from '../mocks/appointments.mock.json'
+import appointmentsMock from '../mocks/appointments.mock.json' with { type: 'json' }
 
 const router = express.Router()
 
@@ -26,7 +26,7 @@ const router = express.Router()
  *   ]
  * }
  */
-app.get('/appointments', checkToken, (req, res) => {
+router.get('/appointments', checkToken, (req, res) => {
   res.json(appointmentsMock)
 })
 
