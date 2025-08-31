@@ -1,24 +1,23 @@
 {
-  "name": "customers",
+  "name": "google-2fa-api",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon index.js"
   },
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/EMB-Contabilidade-Empresarial-LTDA/customers.git"
+    "url": "git+https://github.com/natanzeraa/google-2FA-api.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/EMB-Contabilidade-Empresarial-LTDA/customers/issues"
+    "url": "https://github.com/natanzeraa/google-2FA-api/issues"
   },
-  "homepage": "https://github.com/EMB-Contabilidade-Empresarial-LTDA/customers#readme",
+  "homepage": "https://github.com/natanzeraa/google-2FA-api#readme",
   "dependencies": {
     "axios": "^1.11.0",
     "base32-encode": "^2.0.0",
