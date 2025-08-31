@@ -5,8 +5,6 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import connectDB from './src/config/database.js'
 import authRoutes from './src/routes/auth.routes.js'
-import cnpjRoutes from './src/routes/cnpj.routes.js'
-import customerRoutes from './src/routes/customer.routes.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -20,9 +18,7 @@ app.use(express.json())
 
 connectDB()
 
-app.use(`${BASE_API_URI}/cnpj`, cnpjRoutes)
 app.use(`${BASE_API_URI}/auth`, authRoutes)
-app.use(`${BASE_API_URI}/customers`, customerRoutes)
 
 const PORT = process.env.PORT || 3000
 app.listen(PORT, () => console.log(`Service running at ${PORT}`))
