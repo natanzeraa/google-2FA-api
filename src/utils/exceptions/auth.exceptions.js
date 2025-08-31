@@ -46,7 +46,7 @@ class TOTPAuthExpiredException extends AuthException {
 
 class TOTPSecretNotFoundException extends AuthException {
   constructor(
-    message = 'Secret não encontrado para essa organização',
+    message = 'Secret não encontrado para essa usuário',
     status = 404
   ) {
     super(message, status)
@@ -84,10 +84,10 @@ class TOTPAuthAlreadyDisabledException extends AuthException {
   }
 }
 
-class OrganizationNotFoundException extends AuthException {
-  constructor(message = 'Organização não existe', status = 404) {
+class UserNotFoundException extends AuthException {
+  constructor(message = 'Usuário não existe', status = 404) {
     super(message, status)
-    this.name = 'OrganizationNotFoundException'
+    this.name = 'UserNotFoundException'
   }
 }
 
@@ -95,12 +95,12 @@ export {
   AccountNotFoundException,
   AuthException,
   InvalidCredentialsException,
-  OrganizationNotFoundException,
   TOTPAuthAlreadyDisabledException,
   TOTPAuthAlreadyEnabledException,
   TOTPAuthException,
   TOTPAuthExpiredException,
   TOTPAuthInvalidException,
   TOTPAuthNotEnabledException,
-  TOTPSecretNotFoundException
+  TOTPSecretNotFoundException,
+  UserNotFoundException
 }

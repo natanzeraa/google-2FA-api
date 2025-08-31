@@ -17,22 +17,15 @@ export const errorMessages = {
   ACCOUNT_NAME_INVALID: 'O nome da conta é inválido',
 
   // Validações específicas
-  COMPANY_NAME_REQUIRED: 'O nome da empresa é obrigatório',
-  COMPANY_NAME_INVALID: 'O nome da empresa é inválido',
-  ORGANIZATION_OR_TOKEN_MISSING: 'Empresa ou token é inválido',
-  ORGANIZATION_NOT_FOUND: 'Organização não encontrada',
+  USER_NAME_REQUIRED: 'Nome completo é obrigatório',
+  USER_NAME_INVALID: 'Nome completo é inválido',
+  USER_OR_TOKEN_MISSING: 'Conta de usuário ou token é inválido',
+  USER_NOT_FOUND: 'Usuário não encontrada',
 
   EMAIL_REQUIRED: 'O e-mail é obrigatório',
   EMAIL_INVALID: 'O e-mail informado é inválido',
   EMAIL_IN_USE_ALREADY: 'Email já está em uso',
   INVALID_CREDENTIALS: 'Email ou senha inválidos',
-
-  CNPJ_REQUIRED: 'O CNPJ é obrigatório',
-  CNPJ_INVALID: 'O CNPJ informado é inválido',
-
-  PHONE_REQUIRED: 'O número de telefone é obrigatório',
-  PHONE_INVALID: 'O número de telefone informado é inválido',
-  PHONE_IN_USE_ALREADY: 'Telefone já está em uso',
 
   PASSWORD_REQUIRED: 'A senha é obrigatória',
   PASSWORD_TOO_SHORT: 'A senha deve ter no mínimo 6 caracteres',
@@ -42,7 +35,7 @@ export const errorMessages = {
   USERS_REQUIRED: 'Ao menos um usuário deve ser informado',
   USERS_INVALID: 'A lista de usuários é inválida',
 
-  MANDATORY_FIELDS: 'Email, senha e telefone são obrigatórios',
+  MANDATORY_FIELDS: 'Nome, email e senha são obrigatórios',
 
   // TOTP / 2FA
   TOTP_REQUIRED: 'O código de autenticação é obrigatório',
@@ -52,8 +45,8 @@ export const errorMessages = {
   TOTP_ALREADY_DISABLED: 'A autenticação de dois fatores já está inativa',
   TOTP_NOT_ENABLED: 'A autenticação de dois fatores não está habilitada',
   TOTP_COULD_NOT_BE_ENABLED:
-    'A autenticação de dois fatores não foi habilitada para essa organização',
+    'A autenticação de dois fatores não foi habilitada para essa usuário',
   TOTP_NOT_GENERATED: 'O código de autenticação não foi gerado',
-  TOTP_NOT_FOUND: 'Secret não encontrado para essa organização',
+  TOTP_NOT_FOUND: 'Secret não encontrado para essa usuário',
   TWO_FA_ENABLE_REQUIRED: '2FA é um valor obrigatório (true/false)'
 }
