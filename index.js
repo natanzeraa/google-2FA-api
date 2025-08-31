@@ -4,6 +4,7 @@ import 'module-alias/register.js'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import connectDB from './src/config/database.js'
+import appointmentRoutes from './src/routes/appointments.routes.js'
 import authRoutes from './src/routes/auth.routes.js'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -19,6 +20,7 @@ app.use(express.json())
 connectDB()
 
 app.use(`${BASE_API_URI}/auth`, authRoutes)
+app.use(`${BASE_API_URI}`, appointmentRoutes)
 
 const PORT = process.env.PORT || 3000
 app.listen(PORT, () => console.log(`Service running at ${PORT}`))
