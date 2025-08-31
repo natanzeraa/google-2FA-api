@@ -1,46 +1,51 @@
 import * as OTPAuth from 'otpauth'
 import * as QRCode from 'qrcode'
-import Organization from '../models/organization.js'
+import User from '../models/user.js'
 import {
   AuthException,
-  OrganizationNotFoundException,
   TOTPAuthAlreadyDisabledException,
   TOTPAuthAlreadyEnabledException,
+  TOTPAuthException,
   TOTPAuthInvalidException,
-  TOTPSecretNotFoundException
+  TOTPSecretNotFoundException,
+  UserNotFoundException
 } from '../utils/exceptions/auth.exceptions.js'
 import { requiredFieldsHandler } from '../utils/handlers/requiredFileds.handler.js'
 import { generateBase32Secret } from '../utils/handlers/tokenGeneration.handler.js'
 import * as authMsg from '../utils/messages/auth.messages.js'
-import * as organizationMsg from '../utils/messages/organization.messages.js'
+import * as userMsg from '../utils/messages/user.messages.js'
 import {
   checkTOTPAuthSchema,
   enableTOTPAuthSchema
-} from '../utils/validations/totpauth.validator.js'
+} from '../utils/schemas/totpauth.schema.js'
 
 const otpAuthService = {
   checkTOTPAuth: async (data) => {
     try {
+      if (!data.token) {
+        throw new TOTPAuthException(authMsg.errorMessages.TOTP_REQUIRED, 400)
+      }
+
       const parsed = requiredFieldsHandler({
         schema: checkTOTPAuthSchema,
         data: data
       })
 
-      const { token, companyName, email } = parsed.data
+      const { token, name, email } = parsed.data
 
-      const organization = await Organization.findOne({
-        company_name: companyName,
+      const user = await User.findOne({
+        name: name,
         email: email
       })
 
-      if (!organization) {
-        throw new OrganizationNotFoundException(
-          authMsg.errorMessages.ORGANIZATION_NOT_FOUND,
+      if (!user) {
+        throw new UserNotFoundException(
+          authMsg.errorMessages.USER_NOT_FOUND,
           404
         )
       }
 
-      if (!organization.totp_secret) {
+      if (!user.totp_secret) {
         throw new TOTPSecretNotFoundException(
           authMsg.errorMessages.TOTP_NOT_FOUND,
           404
@@ -48,12 +53,12 @@ const otpAuthService = {
       }
 
       let totp = new OTPAuth.TOTP({
-        issuer: companyName,
+        issuer: name,
         label: email,
         algorithm: 'SHA1',
         digits: 6,
         period: 30,
-        secret: organization.totp_secret
+        secret: user.totp_secret
       })
 
       let isValid = totp.validate({ token })
@@ -83,34 +88,34 @@ const otpAuthService = {
         data: data
       })
 
-      const { companyName, email } = parsed.data
+      const { name, email } = parsed.data
 
-      const organization = await Organization.findOne({
-        company_name: companyName,
+      const user = await User.findOne({
+        name: name,
         email: email
       })
 
-      if (!organization) {
-        throw new OrganizationNotFoundException(
-          authMsg.errorMessages.ORGANIZATION_NOT_FOUND,
+      if (!user) {
+        throw new UserNotFoundException(
+          authMsg.errorMessages.USER_NOT_FOUND,
           404
         )
       }
 
-      if (organization.two_fa_enabled) {
+      if (user.two_fa_enabled) {
         throw new TOTPAuthAlreadyEnabledException(
           authMsg.errorMessages.TOTP_ALREADY_ENABLED,
           400
         )
       }
 
-      await organization.updateOne(
+      await user.updateOne(
         { $set: { two_fa_enabled: true } },
         { new: true, runValidators: true }
       )
 
       const totpAuth = await otpAuthService.generateTOTPAuth({
-        companyName,
+        name,
         email
       })
 
@@ -132,21 +137,21 @@ const otpAuthService = {
         data: data
       })
 
-      const { companyName, email, token } = parsed.data
+      const { name, email, token } = parsed.data
 
-      const organization = await Organization.findOne({
-        company_name: companyName,
+      const user = await User.findOne({
+        name: name,
         email: email
       })
 
-      if (!organization) {
-        throw new OrganizationNotFoundException(
-          authMsg.errorMessages.ORGANIZATION_NOT_FOUND,
+      if (!user) {
+        throw new UserNotFoundException(
+          authMsg.errorMessages.USER_NOT_FOUND,
           404
         )
       }
 
-      if (!organization.two_fa_enabled) {
+      if (!user.two_fa_enabled) {
         throw new TOTPAuthAlreadyDisabledException(
           authMsg.errorMessages.TOTP_ALREADY_DISABLED,
           400
@@ -154,12 +159,12 @@ const otpAuthService = {
       }
 
       let totp = new OTPAuth.TOTP({
-        issuer: companyName,
+        issuer: name,
         label: email,
         algorithm: 'SHA1',
         digits: 6,
         period: 30,
-        secret: organization.totp_secret
+        secret: user.totp_secret
       })
 
       let isValid = totp.validate({ token })
@@ -171,7 +176,7 @@ const otpAuthService = {
         )
       }
 
-      const result = await organization.updateOne(
+      const result = await user.updateOne(
         { $set: { two_fa_enabled: false, totp_secret: '' } },
         { new: true, runValidators: true }
       )
@@ -187,25 +192,25 @@ const otpAuthService = {
     }
   },
 
-  generateTOTPAuth: async ({ companyName, email }) => {
+  generateTOTPAuth: async ({ name, email }) => {
     try {
       const base32Secret = generateBase32Secret()
 
-      const organization = await Organization.findOneAndUpdate(
-        { company_name: companyName, email: email },
+      const user = await User.findOneAndUpdate(
+        { name: name, email: email },
         { totp_secret: base32Secret }
       )
 
-      if (!organization) {
+      if (!user) {
         return {
           success: false,
           status: 404,
-          message: organizationMsg.errorMessages.ORGANIZATION_NOT_FOUND
+          message: userMsg.errorMessages.USER_NOT_FOUND
         }
       }
 
       let totp = new OTPAuth.TOTP({
-        issuer: companyName,
+        issuer: name,
         label: email,
         algorithm: 'SHA1',
         digits: 6,
